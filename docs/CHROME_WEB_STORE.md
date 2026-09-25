@@ -61,7 +61,8 @@ that zip in the CWS dashboard. Bump `version` in `public/manifest.json` (and
   and (b) if the user adds their own Gemini API key, transaction details are sent
   to Google under the user's key. Certify: no selling of data; complies with the
   Limited Use policy; no unrelated data collection.
-- **Privacy policy URL:** your hosted `PRIVACY.md`.
+- **Privacy policy URL:** **https://huanbv.github.io/aether-wallet/** (hosted via
+  GitHub Pages from `/docs`; source in `docs/index.html`).
 
 ---
 
