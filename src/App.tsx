@@ -4,8 +4,10 @@
  * AetherWallet - Open-Source Non-Custodial Web3 Extension Wallet
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { StorageEngine } from './utils/crypto';
+import { checkForUpdate, type UpdateInfo } from './services/updateCheck';
 import { Header } from './components/Header';
 import { Welcome } from './pages/Welcome';
 import { Dashboard } from './pages/Dashboard';
@@ -24,7 +26,94 @@ import {
   Minimize2,
   Sparkles,
   Lock,
+  Download,
+  X,
 } from 'lucide-react';
+
+const UPDATE_CACHE_KEY = 'aether_update_cache';
+const UPDATE_DISMISSED_KEY = 'aether_update_dismissed_version';
+const UPDATE_CHECK_TTL_MS = 6 * 60 * 60 * 1000; // re-check at most every 6 hours
+
+/**
+ * Banner shown when a newer GitHub Release exists. Checks are throttled to once
+ * every 6 hours (cached in storage) and a dismissed version stays hidden until
+ * an even newer version is published.
+ */
+function UpdateBanner() {
+  const { t } = useApp();
+  const [info, setInfo] = useState<UpdateInfo | null>(null);
+  const [dismissedVersion, setDismissedVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      try {
+        setDismissedVersion(await StorageEngine.get<string>(UPDATE_DISMISSED_KEY));
+
+        const cached = await StorageEngine.get<{ checkedAt: number; info: UpdateInfo }>(
+          UPDATE_CACHE_KEY
+        );
+        if (cached && Date.now() - cached.checkedAt < UPDATE_CHECK_TTL_MS) {
+          if (!cancelled) setInfo(cached.info);
+          return;
+        }
+
+        const fresh = await checkForUpdate();
+        if (fresh) {
+          await StorageEngine.set(UPDATE_CACHE_KEY, { checkedAt: Date.now(), info: fresh });
+          if (!cancelled) setInfo(fresh);
+        }
+      } catch {
+        /* offline / not an extension — no banner */
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const dismiss = () => {
+    if (info) {
+      StorageEngine.set(UPDATE_DISMISSED_KEY, info.latestVersion);
+      setDismissedVersion(info.latestVersion);
+    }
+  };
+
+  if (!info || !info.available || dismissedVersion === info.latestVersion) {
+    return null;
+  }
+
+  return (
+    <div className="w-full max-w-sm sm:max-w-md mb-2 px-3 py-2 rounded-xl bg-indigo-600 text-white flex items-center justify-between gap-2 shadow-md shadow-indigo-600/30">
+      <div className="flex items-center gap-2 text-[11px] font-semibold min-w-0">
+        <Download className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">
+          {t('updateAvailableTitle')} — v{info.latestVersion}
+        </span>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <a
+          href={info.releaseUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="px-2.5 py-1 rounded-lg bg-white text-indigo-700 text-[11px] font-bold hover:bg-indigo-50 transition"
+        >
+          {t('updateDownloadBtn')}
+        </a>
+        <button
+          onClick={dismiss}
+          aria-label="Dismiss"
+          className="p-1 rounded-lg hover:bg-indigo-500 transition cursor-pointer"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function WalletAppContent() {
   const { hasVault, isUnlocked, isLoading, t } = useApp();
@@ -57,6 +146,9 @@ function WalletAppContent() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-0 sm:p-4 selection:bg-indigo-500 selection:text-white">
+      {/* New-version notification (checks GitHub Releases) */}
+      <UpdateBanner />
+
       {/* Extension Simulator Frame Switcher (for web preview) */}
       <div className="w-full max-w-sm sm:max-w-md mb-2 px-3 py-1 flex items-center justify-between text-xs text-slate-400 select-none">
         <div className="flex items-center gap-1.5">

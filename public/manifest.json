@@ -3,7 +3,7 @@
   "name": "AetherWallet - Non-Custodial Web3 Wallet",
   "short_name": "AetherWallet",
   "description": "100% Non-custodial open-source Web3 wallet extension with AES-256-GCM encryption, bilingual support (VI/EN), and Gemini AI Security Guard.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "action": {
     "default_popup": "index.html",
     "default_title": "Open AetherWallet",

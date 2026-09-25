@@ -11,7 +11,7 @@ Bạn chỉ cần tải bản đã đóng gói sẵn. Không cần cài Node, kh
 
 ### 🇻🇳 Các bước
 1. Mở trang **[Releases](https://github.com/huanbv/aether-wallet/releases/latest)**.
-2. Tải file `aether-wallet-v1.0.0-chrome.zip` trong mục **Assets**.
+2. Tải file `aether-wallet-*-chrome.zip` trong mục **Assets** của bản mới nhất.
 3. **Giải nén** file → bạn được thư mục tên `aether-wallet`.
 4. Mở trình duyệt (Chrome / Brave / Edge / Cốc Cốc) → gõ vào thanh địa chỉ: `chrome://extensions/`
 5. Bật công tắc **Developer mode / Chế độ dành cho nhà phát triển** (góc trên bên phải).
@@ -22,7 +22,7 @@ Bạn chỉ cần tải bản đã đóng gói sẵn. Không cần cài Node, kh
 
 ### 🇬🇧 Steps
 1. Open **[Releases](https://github.com/huanbv/aether-wallet/releases/latest)**.
-2. Download `aether-wallet-v1.0.0-chrome.zip` under **Assets**.
+2. Download the `aether-wallet-*-chrome.zip` under the latest release's **Assets**.
 3. **Unzip** it → you get a folder named `aether-wallet`.
 4. Open `chrome://extensions/` in your browser.
 5. Enable **Developer mode** (top-right toggle).

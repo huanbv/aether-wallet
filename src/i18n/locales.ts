@@ -159,6 +159,10 @@ export interface TranslationDictionary {
   geminiKeyLocalMode: string;
   getGeminiKeyHint: string;
   aiLocalModeBadge: string;
+
+  // Update notification banner
+  updateAvailableTitle: string;
+  updateDownloadBtn: string;
   customRpcSetting: string;
   networkNamePlaceholder: string;
   rpcUrlPlaceholder: string;
@@ -354,6 +358,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     geminiKeyLocalMode: 'Local heuristic mode — no API key set.',
     getGeminiKeyHint: 'Get a free key at Google AI Studio (aistudio.google.com/apikey).',
     aiLocalModeBadge: 'LOCAL MODE',
+    updateAvailableTitle: 'New version available',
+    updateDownloadBtn: 'Update',
     customRpcSetting: 'RPC Node Endpoints',
     networkNamePlaceholder: 'Network Name (e.g. My Private Node)',
     rpcUrlPlaceholder: 'RPC URL (https://...)',
@@ -545,6 +551,8 @@ export const translations: Record<Language, TranslationDictionary> = {
     geminiKeyLocalMode: 'Chế độ phân tích cục bộ — chưa nhập khóa API.',
     getGeminiKeyHint: 'Lấy khóa miễn phí tại Google AI Studio (aistudio.google.com/apikey).',
     aiLocalModeBadge: 'CHẾ ĐỘ CỤC BỘ',
+    updateAvailableTitle: 'Đã có bản cập nhật mới',
+    updateDownloadBtn: 'Tải về',
     customRpcSetting: 'Điểm Cuối Node RPC',
     networkNamePlaceholder: 'Tên Mạng (ví dụ: Node Riêng Của Tôi)',
     rpcUrlPlaceholder: 'Địa chỉ RPC (https://...)',

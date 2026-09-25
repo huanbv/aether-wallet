@@ -165,7 +165,7 @@ Thư mục `/dist` sau khi build sẽ chứa đầy đủ:
 
 If you just want to use the wallet, download the pre-built package — no Node, no build:
 
-1. Go to [**Releases**](https://github.com/huanbv/aether-wallet/releases/latest) and download `aether-wallet-v1.0.0-chrome.zip`.
+1. Go to [**Releases**](https://github.com/huanbv/aether-wallet/releases/latest) and download the `aether-wallet-*-chrome.zip` from the latest release's Assets.
 2. Unzip it → you get an `aether-wallet` folder.
 3. Open `chrome://extensions/`, enable **Developer mode** (top-right).
 4. Click **Load unpacked** and select the unzipped `aether-wallet` folder.
