@@ -22,6 +22,8 @@ import {
   ExternalLink,
   ShieldAlert,
   Clock,
+  KeyRound,
+  Save,
 } from 'lucide-react';
 
 interface SettingsProps {
@@ -42,6 +44,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenNetworkModal }
     mnemonic,
     rawMasterPassword,
     resetWallet,
+    geminiModel,
+    hasGeminiKey,
+    saveGeminiCredentials,
+    removeGeminiCredentials,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'GENERAL' | 'BLACKLIST' | 'SECURITY' | 'ABOUT'>('GENERAL');
@@ -63,6 +69,32 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenNetworkModal }
 
   // Reset Wallet Confirmation
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // BYOK — Gemini API key form
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [modelInput, setModelInput] = useState(geminiModel);
+  const [savingKey, setSavingKey] = useState(false);
+  const [keySavedMsg, setKeySavedMsg] = useState(false);
+
+  const handleSaveGeminiKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!apiKeyInput.trim()) return;
+    try {
+      setSavingKey(true);
+      await saveGeminiCredentials(apiKeyInput.trim(), modelInput.trim());
+      setApiKeyInput('');
+      setKeySavedMsg(true);
+      setTimeout(() => setKeySavedMsg(false), 3000);
+    } catch (err) {
+      console.warn('Save Gemini key failed:', err);
+    } finally {
+      setSavingKey(false);
+    }
+  };
+
+  const handleRemoveGeminiKey = async () => {
+    await removeGeminiCredentials();
+  };
 
   // Load custom blacklist
   useEffect(() => {
@@ -315,6 +347,85 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenNetworkModal }
             <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
               {t('aiSecurityDescription')}
             </p>
+          </div>
+
+          {/* BYOK — Gemini API Key (encrypted locally, called directly from client) */}
+          <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white">
+                <KeyRound className="h-3.5 w-3.5" />
+              </div>
+              <div className="font-bold text-slate-900 dark:text-white">
+                {t('geminiApiKeyLabel')}
+              </div>
+            </div>
+
+            {/* Status badge */}
+            <div
+              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold ${
+                hasGeminiKey
+                  ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              <Sparkles className="h-3 w-3" />
+              <span>{hasGeminiKey ? t('geminiKeyActive') : t('geminiKeyLocalMode')}</span>
+            </div>
+
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              {t('geminiApiKeyDesc')}
+            </p>
+
+            <form onSubmit={handleSaveGeminiKey} className="space-y-2">
+              <input
+                type="password"
+                autoComplete="off"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder={t('geminiApiKeyPlaceholder')}
+                className="w-full text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              />
+              <div>
+                <label className="text-[10px] text-slate-400 block mb-1">{t('geminiModelLabel')}</label>
+                <input
+                  type="text"
+                  value={modelInput}
+                  onChange={(e) => setModelInput(e.target.value)}
+                  placeholder={t('geminiModelPlaceholder')}
+                  className="w-full text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={savingKey || !apiKeyInput.trim()}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold transition cursor-pointer"
+                >
+                  {keySavedMsg ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>{keySavedMsg ? t('copied') : t('saveGeminiKey')}</span>
+                </button>
+                {hasGeminiKey && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveGeminiKey}
+                    className="py-2 px-3 rounded-xl border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 font-semibold hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                  >
+                    {t('removeGeminiKey')}
+                  </button>
+                )}
+              </div>
+            </form>
+
+            <a
+              href="https://aistudio.google.com/apikey"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
+              <ExternalLink className="h-3 w-3" />
+              <span>{t('getGeminiKeyHint')}</span>
+            </a>
           </div>
 
           {/* Manage RPC Networks Button */}

@@ -18,11 +18,10 @@ Thank you for your interest in contributing to **AetherWallet** — the 100% dec
    npm install
    ```
 4. **Cấu hình môi trường**:
-   Sao chép file `.env.example` thành `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-   Cung cấp `GEMINI_API_KEY` từ Google AI Studio nếu muốn kích hoạt tính năng kiểm tra an ninh AI Transaction Guard trên backend proxy.
+   Không cần API key để chạy ví. Tính năng AI Transaction Guard theo mô hình BYOK:
+   mỗi người dùng tự nhập khóa Gemini của họ trong **Cài đặt → Khóa API Gemini**,
+   khóa được mã hóa bằng mật khẩu chính và chỉ lưu trên thiết bị (không qua server).
+   Nếu không nhập khóa, bộ bảo vệ chạy ở chế độ phân tích cục bộ.
 5. **Chạy máy chủ phát triển (Dev Server)**:
    ```bash
    npm run dev

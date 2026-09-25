@@ -146,6 +146,19 @@ export interface TranslationDictionary {
   aiSecurityDescription: string;
   aiGuardEnabled: string;
   aiGuardDisabled: string;
+
+  // BYOK — Gemini API key (stored encrypted locally, called directly from client)
+  geminiApiKeyLabel: string;
+  geminiApiKeyDesc: string;
+  geminiApiKeyPlaceholder: string;
+  geminiModelLabel: string;
+  geminiModelPlaceholder: string;
+  saveGeminiKey: string;
+  removeGeminiKey: string;
+  geminiKeyActive: string;
+  geminiKeyLocalMode: string;
+  getGeminiKeyHint: string;
+  aiLocalModeBadge: string;
   customRpcSetting: string;
   networkNamePlaceholder: string;
   rpcUrlPlaceholder: string;
@@ -329,6 +342,18 @@ export const translations: Record<Language, TranslationDictionary> = {
     aiSecurityDescription: 'Audit calldata, drainer signatures, and zero-day phishing contracts before signing.',
     aiGuardEnabled: 'Enabled (Recommended)',
     aiGuardDisabled: 'Disabled',
+
+    geminiApiKeyLabel: 'Your Gemini API Key',
+    geminiApiKeyDesc: 'Bring your own key. It is encrypted with your master password and stored only on this device — never sent to any server except Google. Without a key, the guard runs in local heuristic mode.',
+    geminiApiKeyPlaceholder: 'Paste your Gemini API key (AIza...)',
+    geminiModelLabel: 'Model (optional)',
+    geminiModelPlaceholder: 'gemini-2.5-flash',
+    saveGeminiKey: 'Save Key',
+    removeGeminiKey: 'Remove Key',
+    geminiKeyActive: 'AI deep-inspection active (your key is set).',
+    geminiKeyLocalMode: 'Local heuristic mode — no API key set.',
+    getGeminiKeyHint: 'Get a free key at Google AI Studio (aistudio.google.com/apikey).',
+    aiLocalModeBadge: 'LOCAL MODE',
     customRpcSetting: 'RPC Node Endpoints',
     networkNamePlaceholder: 'Network Name (e.g. My Private Node)',
     rpcUrlPlaceholder: 'RPC URL (https://...)',
@@ -508,6 +533,18 @@ export const translations: Record<Language, TranslationDictionary> = {
     aiSecurityDescription: 'Tự động phát hiện hợp đồng rút cạn tiền (drainer), chữ ký độc hại, phishing trước khi ký.',
     aiGuardEnabled: 'Đang Bật (Khuyến nghị)',
     aiGuardDisabled: 'Đang Tắt',
+
+    geminiApiKeyLabel: 'Khóa API Gemini Của Bạn',
+    geminiApiKeyDesc: 'Tự nhập khóa của riêng bạn. Khóa được mã hóa bằng mật khẩu chính và chỉ lưu trên thiết bị này — không gửi lên bất kỳ máy chủ nào ngoài Google. Nếu không nhập khóa, bộ bảo vệ sẽ chạy ở chế độ phân tích cục bộ.',
+    geminiApiKeyPlaceholder: 'Dán khóa API Gemini của bạn (AIza...)',
+    geminiModelLabel: 'Model (tùy chọn)',
+    geminiModelPlaceholder: 'gemini-2.5-flash',
+    saveGeminiKey: 'Lưu Khóa',
+    removeGeminiKey: 'Xóa Khóa',
+    geminiKeyActive: 'Đang bật phân tích sâu bằng AI (đã có khóa của bạn).',
+    geminiKeyLocalMode: 'Chế độ phân tích cục bộ — chưa nhập khóa API.',
+    getGeminiKeyHint: 'Lấy khóa miễn phí tại Google AI Studio (aistudio.google.com/apikey).',
+    aiLocalModeBadge: 'CHẾ ĐỘ CỤC BỘ',
     customRpcSetting: 'Điểm Cuối Node RPC',
     networkNamePlaceholder: 'Tên Mạng (ví dụ: Node Riêng Của Tôi)',
     rpcUrlPlaceholder: 'Địa chỉ RPC (https://...)',

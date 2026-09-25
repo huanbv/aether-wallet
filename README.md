@@ -135,8 +135,8 @@ Thư mục `/dist` sau khi build sẽ chứa đầy đủ:
 **AetherWallet** is a 100% decentralized, non-custodial, open-source Web3 browser extension built to the Chrome Extension Manifest V3 standard. There are zero centralized databases, zero tracking analytics, and zero remote key vaults. Users maintain absolute sovereignty over their cryptographic assets.
 
 ### Key Highlights
-- **100% Client-Side Web Crypto Security**: Master passwords derive AES-256-GCM keys with 100,000 iterations of PBKDF2 and cryptographically secure random salts.
-- **Gemini AI Transaction Guard**: Integrated with Google AI Studio's `gemini-3.8-flash` model via a secure server proxy to inspect calldata, smart contract recipient addresses, and dangerous signature requests.
+- **100% Client-Side Web Crypto Security**: Master passwords derive AES-256-GCM keys with 310,000 iterations of PBKDF2 and cryptographically secure random salts.
+- **Gemini AI Transaction Guard (BYOK)**: Each user brings their own Google Gemini API key. It is encrypted with the master password, stored only on the device, and used to call Google directly from the client — no shared key and no backend proxy. Without a key, the guard runs in a fully local heuristic mode (blacklist, address-poisoning detection, calldata decoding).
 - **Full Bilingual Localization (EN / VI)**: Seamless language toggling with rich translation dictionaries.
 - **Instant Dark/Light Mode**: Styled with Tailwind CSS for high readability and crypto aesthetics.
 - **Multi-Chain EVM & Custom RPCs**: Preloaded with Ethereum, BNB Chain, Polygon, Arbitrum, Base, Sepolia, plus instant support for any custom RPC node.
@@ -150,18 +150,20 @@ git clone https://github.com/your-username/aether-wallet.git
 cd aether-wallet
 
 # 2. Install dependencies
-npm install
+npm install   # or: bun install
 
-# 3. Configure environment variables
-cp .env.example .env
-# Edit .env with your GEMINI_API_KEY from Google AI Studio
-
-# 4. Start local development server
+# 3. Start local development server
 npm run dev
 
-# 5. Build for production extension package
+# 4. Build for production extension package
 npm run build
 ```
+
+> No `.env` / API key is required to run the wallet. The AI Transaction Guard is
+> opt-in per user: open **Settings → Your Gemini API Key** and paste your own key
+> (get one free at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)).
+> The key is encrypted with your master password and never leaves your device
+> except in direct calls to Google.
 
 ### Loading Unpacked in Chrome / Chromium
 1. Open Chrome, Brave, or Chromium.

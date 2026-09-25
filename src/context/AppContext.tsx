@@ -18,6 +18,7 @@ import {
   StorageEngine,
   type EncryptedPayload,
 } from '../utils/crypto';
+import { DEFAULT_GEMINI_MODEL } from '../services/aiSecurity';
 
 export interface TransactionRecord {
   hash: string;
@@ -82,6 +83,13 @@ interface AppContextType {
   // AI Security Guard Settings
   aiGuardEnabled: boolean;
   setAiGuardEnabled: (enabled: boolean) => void;
+
+  // BYOK — Gemini API credentials (key encrypted locally, only in memory when unlocked)
+  geminiApiKey: string | null;
+  geminiModel: string;
+  hasGeminiKey: boolean;
+  saveGeminiCredentials: (apiKey: string, model?: string) => Promise<void>;
+  removeGeminiCredentials: () => Promise<void>;
 }
 
 const STORAGE_KEYS = {
@@ -93,6 +101,8 @@ const STORAGE_KEYS = {
   SELECTED_ACC_IDX: 'aether_selected_account_idx',
   TX_HISTORY: 'aether_tx_history',
   AI_GUARD: 'aether_ai_guard_enabled',
+  GEMINI_KEY: 'aether_encrypted_gemini_key', // EncryptedPayload (AES-256-GCM w/ master password)
+  GEMINI_MODEL: 'aether_gemini_model', // plaintext model id (not sensitive)
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -116,6 +126,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isRefreshingBalance, setIsRefreshingBalance] = useState<boolean>(false);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [aiGuardEnabled, setAiGuardEnabledState] = useState<boolean>(true);
+  const [geminiApiKey, setGeminiApiKey] = useState<string | null>(null);
+  const [geminiModel, setGeminiModel] = useState<string>(DEFAULT_GEMINI_MODEL);
 
   // Initialize storage preferences on load
   useEffect(() => {
@@ -143,6 +155,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const savedAiGuard = await StorageEngine.get<boolean>(STORAGE_KEYS.AI_GUARD);
         if (savedAiGuard !== null && savedAiGuard !== undefined) {
           setAiGuardEnabledState(Boolean(savedAiGuard));
+        }
+
+        // Load Gemini model preference (plaintext; the key itself is decrypted on unlock)
+        const savedModel = await StorageEngine.get<string>(STORAGE_KEYS.GEMINI_MODEL);
+        if (typeof savedModel === 'string' && savedModel.trim()) {
+          setGeminiModel(savedModel.trim());
         }
 
         // Load Custom Networks
@@ -337,6 +355,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setAccounts(vaultData.accounts || []);
       setCurrentAccountIndex(0);
       setIsUnlocked(true);
+
+      // Decrypt the stored Gemini API key (if any) into memory for this session.
+      try {
+        const encKey = await StorageEngine.get<EncryptedPayload>(STORAGE_KEYS.GEMINI_KEY);
+        if (encKey && encKey.ciphertext) {
+          const plainKey = await decryptData(encKey, password);
+          setGeminiApiKey(plainKey || null);
+        }
+      } catch (e) {
+        console.warn('Could not decrypt stored Gemini key:', e);
+      }
+
       return true;
     } catch (err) {
       console.error('Unlock error:', err);
@@ -350,6 +380,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMnemonic(null);
     setAccounts([]);
     setIsUnlocked(false);
+    setGeminiApiKey(null); // never keep the decrypted key in memory while locked
   }, []);
 
   // Reset entire wallet and purge local data
@@ -362,6 +393,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setHasVault(false);
     setIsUnlocked(false);
     setNetworks(DEFAULT_NETWORKS);
+    setGeminiApiKey(null);
+    setGeminiModel(DEFAULT_GEMINI_MODEL);
+  };
+
+  // Save the user's own Gemini API key (BYOK), encrypted with the master password.
+  const saveGeminiCredentials = async (apiKey: string, model?: string): Promise<void> => {
+    if (!rawMasterPassword) {
+      throw new Error('Wallet is locked');
+    }
+    const cleanKey = apiKey.trim();
+    const cleanModel = (model || '').trim() || DEFAULT_GEMINI_MODEL;
+
+    if (cleanKey) {
+      const encrypted = await encryptData(cleanKey, rawMasterPassword);
+      await StorageEngine.set(STORAGE_KEYS.GEMINI_KEY, encrypted);
+      setGeminiApiKey(cleanKey);
+    }
+    await StorageEngine.set(STORAGE_KEYS.GEMINI_MODEL, cleanModel);
+    setGeminiModel(cleanModel);
+  };
+
+  // Remove the stored Gemini key (revert to local heuristic mode).
+  const removeGeminiCredentials = async (): Promise<void> => {
+    await StorageEngine.remove(STORAGE_KEYS.GEMINI_KEY);
+    setGeminiApiKey(null);
   };
 
   // Derive and add the next account (Account 2, Account 3, etc.)
@@ -479,6 +535,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addTransactionRecord,
         aiGuardEnabled,
         setAiGuardEnabled,
+        geminiApiKey,
+        geminiModel,
+        hasGeminiKey: Boolean(geminiApiKey),
+        saveGeminiCredentials,
+        removeGeminiCredentials,
       }}
     >
       {children}

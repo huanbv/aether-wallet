@@ -39,6 +39,8 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
     currentNetwork,
     balance,
     aiGuardEnabled,
+    geminiApiKey,
+    geminiModel,
     addTransactionRecord,
     refreshBalance,
   } = useApp();
@@ -79,15 +81,18 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
       if (isAddress(recipient.trim())) {
         try {
           setIsAuditing(true);
-          const result = await auditTransactionWithGemini({
-            toAddress: recipient.trim(),
-            userAddress: currentAccount?.address,
-            value: amount.trim() || '0',
-            calldata: calldata.trim() || '0x',
-            chainId: currentNetwork.chainId,
-            networkName: currentNetwork.name,
-            tokenSymbol: currentNetwork.symbol,
-          });
+          const result = await auditTransactionWithGemini(
+            {
+              toAddress: recipient.trim(),
+              userAddress: currentAccount?.address,
+              value: amount.trim() || '0',
+              calldata: calldata.trim() || '0x',
+              chainId: currentNetwork.chainId,
+              networkName: currentNetwork.name,
+              tokenSymbol: currentNetwork.symbol,
+            },
+            { apiKey: geminiApiKey, model: geminiModel }
+          );
           setAuditResult(result);
         } catch (e) {
           console.warn('Auto audit error:', e);
@@ -98,7 +103,7 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [recipient, calldata, amount, currentAccount?.address, currentNetwork]);
+  }, [recipient, calldata, amount, currentAccount?.address, currentNetwork, geminiApiKey, geminiModel]);
 
   // Update Gas estimate on input changes
   useEffect(() => {
@@ -139,15 +144,18 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
     setBypassWarning(false);
 
     try {
-      const result = await auditTransactionWithGemini({
-        toAddress: recipient.trim(),
-        userAddress: currentAccount?.address,
-        value: amount.trim() || '0',
-        calldata: calldata.trim() || '0x',
-        chainId: currentNetwork.chainId,
-        networkName: currentNetwork.name,
-        tokenSymbol: currentNetwork.symbol,
-      });
+      const result = await auditTransactionWithGemini(
+        {
+          toAddress: recipient.trim(),
+          userAddress: currentAccount?.address,
+          value: amount.trim() || '0',
+          calldata: calldata.trim() || '0x',
+          chainId: currentNetwork.chainId,
+          networkName: currentNetwork.name,
+          tokenSymbol: currentNetwork.symbol,
+        },
+        { apiKey: geminiApiKey, model: geminiModel }
+      );
 
       setAuditResult(result);
     } catch (err) {
@@ -494,7 +502,9 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
                     <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                       {t('aiGuardTitle')}
                     </h4>
-                    <span className="text-[10px] text-slate-400">Google AI Studio</span>
+                    <span className="text-[10px] text-slate-400">
+                      {geminiApiKey ? 'Google Gemini (your key)' : t('aiLocalModeBadge')}
+                    </span>
                   </div>
                 </div>
 
