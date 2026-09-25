@@ -242,6 +242,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [isUnlocked, currentAccount?.address, currentNetwork?.id, refreshBalance]);
 
+  // Keep the extension background service worker's session in sync so the
+  // injected EIP-1193 provider (window.ethereum) can answer dApp requests.
+  // The account address is only exposed to dApps while the wallet is unlocked.
+  // NOTE: per-origin connection approval is not yet implemented — any site can
+  // read the address of an unlocked wallet. Add a consent prompt before relying
+  // on this for untrusted dApps.
+  useEffect(() => {
+    const chromeApi = (window as unknown as { chrome?: any }).chrome;
+    if (!chromeApi?.runtime?.sendMessage) return;
+    try {
+      chromeApi.runtime.sendMessage({
+        type: 'AETHER_UPDATE_SESSION',
+        payload: {
+          isUnlocked,
+          selectedAddress: isUnlocked ? currentAccount?.address ?? null : null,
+          chainId: `0x${currentNetwork.chainId.toString(16)}`,
+        },
+      });
+    } catch {
+      // Running outside the extension (standalone web preview) — no background worker.
+    }
+  }, [isUnlocked, currentAccount?.address, currentNetwork.chainId]);
+
   // Create New Wallet Vault
   const createWallet = async (
     password: string,

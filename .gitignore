@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+# This project uses bun (bun.lock); ignore npm/yarn/pnpm lockfiles.
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

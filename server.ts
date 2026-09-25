@@ -16,6 +16,9 @@ app.use(express.json({ limit: '2mb' }));
 
 // Server-side Gemini AI Client with required User-Agent header
 const apiKey = process.env.GEMINI_API_KEY || '';
+// Model is configurable so a wrong/renamed model can be corrected via env
+// (Secrets/env panel in AI Studio) without any code change.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 const ai = new GoogleGenAI({
   apiKey,
   httpOptions: {
@@ -132,7 +135,7 @@ Respond with strictly valid JSON format matching this schema:
 `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: GEMINI_MODEL,
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
