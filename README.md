@@ -37,12 +37,14 @@
 **AetherWallet** là nền tảng ví Web3 chuẩn Chrome Extension Manifest V3 hoàn toàn phi tập trung và mã nguồn mở (Non-custodial Open-Source Web3 Wallet). Không có bất kỳ máy chủ trung tâm nào lưu trữ private key hay theo dõi người dùng. Dự án được thiết kế để bất kỳ cá nhân, lập trình viên hoặc tổ chức nào cũng có thể tự do clone mã nguồn về máy, tự kiểm tra mã nguồn (audit), tự build và tùy chỉnh mạng RPC node riêng mà không bị phụ thuộc.
 
 ### Đặc Điểm Nổi Bật
-- **Mã hóa Cục Bộ Chuẩn Quân Sự (AES-256-GCM + PBKDF2)**: Toàn bộ Secret Recovery Phrase (12/24 từ) và Private Key được mã hóa bằng thuật toán Web Crypto API chuẩn AES-256-GCM với 100,000 vòng lặp PBKDF2 và muối (salt) ngẫu nhiên 16 bytes.
-- **Tích Hợp Trợ Thủ An Ninh AI (Gemini AI Transaction Guard)**: Sử dụng mô hình `gemini-3.8-flash` từ Google AI Studio để phân tích calldata, địa chỉ hợp đồng thông minh, kiểm tra cấp quyền không giới hạn (infinite approval), drainer độc hại trước khi người dùng ký giao dịch.
-- **Hỗ Trợ Song Ngữ Hoàn Chỉnh (Tiếng Việt & English)**: Hệ thống i18n chuyển đổi tức thì không cần tải lại trang.
-- **Giao Diện Sáng / Tối (Light & Dark Theme)**: Thiết kế giao diện hiện đại với Tailwind CSS, hỗ trợ chuyển đổi giao diện mượt mà.
-- **Đa Mạng EVM & Tùy Chỉnh RPC Tự Do**: Cấu hình sẵn Ethereum, BNB Chain, Polygon, Arbitrum, Base, Sepolia Testnet và cho phép thêm bất kỳ Custom RPC nào.
-- **Chuẩn EIP-1193**: Tiêm `window.ethereum` vào trang web, sẵn sàng kết nối với Uniswap, OpenSea, PancakeSwap,...
+- **Mã hóa Cục Bộ Chuẩn Quân Sự (AES-256-GCM + PBKDF2)**: Toàn bộ Secret Recovery Phrase (12/24 từ) và Private Key được mã hóa bằng Web Crypto API chuẩn AES-256-GCM với **310,000 vòng lặp PBKDF2** và muối (salt) ngẫu nhiên 16 bytes.
+- **Trợ Thủ An Ninh AI theo mô hình BYOK (Gemini Transaction Guard)**: Mỗi người dùng **tự nhập khóa Gemini của mình** (khóa được mã hóa cục bộ, gọi thẳng tới Google — không qua máy chủ trung gian). Phân tích calldata, cấp quyền vô hạn (infinite approval), drainer độc hại. **Không có khóa vẫn chạy** ở chế độ phân tích cục bộ (blacklist + address poisoning + giải mã calldata).
+- **Bảo Vệ Ký Giao Dịch (EIP-155)**: Ràng buộc chữ ký với đúng `chainId` để chống tấn công phát lại (replay) chéo mạng.
+- **Thông Báo Bản Mới Trong App**: Tự kiểm tra GitHub Releases và hiện banner khi có phiên bản mới hơn.
+- **QR Nhận Tiền Tạo Cục Bộ**: Mã QR được vẽ ngay trên máy (SVG), không gọi dịch vụ ngoài, không lộ địa chỉ ví.
+- **Hỗ Trợ Song Ngữ (Tiếng Việt & English)** + **Giao Diện Sáng / Tối**: i18n chuyển đổi tức thì, thiết kế Tailwind CSS.
+- **Đa Mạng EVM & Tùy Chỉnh RPC**: Ethereum, BNB Chain, Polygon, Arbitrum, Base, Sepolia và thêm Custom RPC tùy ý.
+- **Chuẩn EIP-1193**: Tiêm `window.ethereum` vào trang web để kết nối Uniswap, OpenSea, PancakeSwap,...
 
 ---
 
@@ -72,19 +74,22 @@
 │   │   ├── Send.tsx          # Transfer UI + Gemini AI Transaction Guard
 │   │   └── Settings.tsx      # RPC nodes, Reveal seed/PK, AI toggle, reset
 │   ├── services/
-│   │   └── aiSecurity.ts     # Gemini AI audit integration & local rule engine
+│   │   ├── aiSecurity.ts     # BYOK Gemini audit (direct call) & local rule engine
+│   │   ├── blacklist.ts      # Drainer/phishing blacklist & address-poisoning check
+│   │   └── updateCheck.ts    # In-app "new version" check against GitHub Releases
 │   ├── utils/
 │   │   ├── crypto.ts         # Web Crypto API (AES-256-GCM, PBKDF2, StorageEngine)
-│   │   └── wallet.ts         # Viem, BIP-39, BIP-32 HD derivation, gas estimation
-│   ├── App.tsx               # Main application layout & popup/expanded toggle
+│   │   └── wallet.ts         # Viem, BIP-39, BIP-32 HD derivation, EIP-155 signing
+│   ├── App.tsx               # Main layout, popup/expanded toggle, update banner
 │   ├── index.css             # Tailwind CSS styles & dark mode variants
 │   └── main.tsx              # React DOM entry point
-├── server.ts                 # Express full-stack proxy for Gemini AI security calls
-├── metadata.json             # AI Studio applet metadata & major capabilities
-├── package.json              # Project packages & build scripts
+├── docs/                     # GitHub Pages privacy site + Chrome Web Store guide
+├── package.json              # Project packages & build scripts (pure Vite, no server)
 ├── tailwind.config.js        # Tailwind configuration
 ├── tsconfig.json             # TypeScript compiler settings
 ├── vite.config.ts            # Vite build configuration
+├── INSTALL.md                # Install guide (users + developers)
+├── PRIVACY.md                # Privacy policy
 ├── CONTRIBUTING.md           # Community guidelines & Pull Request instructions
 ├── LICENSE                   # MIT License
 └── README.md                 # Project documentation
@@ -96,7 +101,7 @@
 
 Nếu bạn chỉ muốn dùng ví, hãy tải bản đã build sẵn — không cần Node, không cần build:
 
-1. Vào [**Releases**](https://github.com/huanbv/aether-wallet/releases/latest) và tải file `aether-wallet-v1.0.0-chrome.zip`.
+1. Vào [**Releases**](https://github.com/huanbv/aether-wallet/releases/latest) và tải file `aether-wallet-*-chrome.zip` ở bản mới nhất.
 2. Giải nén → bạn được thư mục `aether-wallet`.
 3. Mở `chrome://extensions/`, bật **Chế độ dành cho nhà phát triển (Developer mode)** ở góc trên bên phải.
 4. Nhấn **Tải tiện ích đã giải nén (Load unpacked)** → chọn thư mục `aether-wallet` vừa giải nén.
@@ -158,6 +163,9 @@ Thư mục `/dist` sau khi build sẽ chứa đầy đủ:
 - **Gemini AI Transaction Guard (BYOK)**: Each user brings their own Google Gemini API key. It is encrypted with the master password, stored only on the device, and used to call Google directly from the client — no shared key and no backend proxy. Without a key, the guard runs in a fully local heuristic mode (blacklist, address-poisoning detection, calldata decoding).
 - **Full Bilingual Localization (EN / VI)**: Seamless language toggling with rich translation dictionaries.
 - **Instant Dark/Light Mode**: Styled with Tailwind CSS for high readability and crypto aesthetics.
+- **EIP-155 Replay-Protected Signing**: Every transaction is bound to its `chainId`, preventing cross-chain replay.
+- **In-App Update Notifications**: Checks GitHub Releases and shows a banner when a newer version is available (auto-disabled on Web Store installs).
+- **Locally-Generated Receive QR**: The QR is rendered on-device (SVG) — no third-party request, no address leak.
 - **Multi-Chain EVM & Custom RPCs**: Preloaded with Ethereum, BNB Chain, Polygon, Arbitrum, Base, Sepolia, plus instant support for any custom RPC node.
 - **EIP-1193 Inpage Provider**: Injects `window.ethereum` into the webpage DOM for compatibility with dApps.
 
@@ -199,6 +207,27 @@ npm run build
 3. Toggle on **Developer mode** in the upper-right corner.
 4. Click **Load unpacked** and select the project's `dist/` directory.
 5. Pin AetherWallet and interact with decentralized applications!
+
+---
+
+## 🕒 Changelog / Lịch Sử Phiên Bản
+
+Xem đầy đủ tại [Releases](https://github.com/huanbv/aether-wallet/releases).
+
+### v1.0.2
+- Chuẩn bị Chrome Web Store: icon PNG 16/48/128, bỏ quyền thừa `unlimitedStorage`, thêm `PRIVACY.md` + trang [Privacy Pages](https://huanbv.github.io/aether-wallet/) và guide đăng store.
+- Banner cập nhật tự tắt khi cài từ Chrome Web Store.
+
+### v1.0.1
+- Thêm **thông báo bản mới trong app** (kiểm tra GitHub Releases).
+- **Fix QR màn Receive**: vẽ QR cục bộ (SVG), không gọi dịch vụ ngoài, không lộ địa chỉ.
+
+### v1.0.0
+- Chuyển AI Guard sang **BYOK** (mỗi người tự nhập khóa Gemini), gọi Google trực tiếp từ client, **bỏ hẳn server** (chạy Vite thuần).
+- Vá bảo mật: **EIP-155** chống replay chéo mạng, ước tính gas thật, nonce `pending`; không lộ địa chỉ khi ví khóa; validate/chống prompt-injection.
+- Phát hành bản build sẵn (zip) + hướng dẫn cài đặt.
+
+> 🔧 **Quy ước cập nhật**: mỗi lần nâng cấp → tăng `version` trong `public/manifest.json` và `FALLBACK_VERSION` trong `src/services/updateCheck.ts`, cập nhật mục Changelog này, rồi tạo Release mới.
 
 ---
 
