@@ -216,6 +216,9 @@ npm run build
 
 Xem đầy đủ tại [Releases](https://github.com/huanbv/aether-wallet/releases).
 
+### v1.0.6
+- **Thêm 5 ngôn ngữ:** Nga (Русский), Nhật (日本語), Hàn (한국어), Trung (中文), Tây Ban Nha (Español) — tổng cộng 7 ngôn ngữ. Chọn trong **Cài đặt → Ngôn ngữ**.
+
 ### v1.0.5
 - **Token tùy chỉnh:** thêm token ERC-20 bất kỳ bằng địa chỉ hợp đồng (tự phát hiện ký hiệu + decimals), hiển thị số dư và gửi được như USDT/USDC; có nút xóa.
 - **Giá USD thật:** lấy giá coin gốc (ETH/BNB/POL/AVAX) + stablecoin từ CoinGecko (cache 5 phút, tự fallback ước tính nếu API lỗi).

@@ -163,7 +163,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         // Load Language
         const savedLang = await StorageEngine.get<Language>(STORAGE_KEYS.LANG);
-        if (savedLang === 'vi' || savedLang === 'en') {
+        if (savedLang && translations[savedLang]) {
           setLanguageState(savedLang);
         }
 

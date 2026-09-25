@@ -6,6 +6,7 @@ import {
   type BlacklistEntry,
 } from '../services/blacklist';
 import { isAddress, formatAddress } from '../utils/wallet';
+import { type Language } from '../i18n/locales';
 import {
   Settings as SettingsIcon,
   Sun,
@@ -25,6 +26,16 @@ import {
   KeyRound,
   Save,
 } from 'lucide-react';
+
+const LANGUAGES: { code: Language; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'vi', label: 'Tiếng Việt' },
+  { code: 'ru', label: 'Русский' },
+  { code: 'ja', label: '日本語' },
+  { code: 'ko', label: '한국어' },
+  { code: 'zh', label: '中文' },
+  { code: 'es', label: 'Español' },
+];
 
 interface SettingsProps {
   onBack: () => void;
@@ -281,34 +292,21 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, onOpenNetworkModal }
                 {t('languageSetting')}
               </div>
               <div className="text-[11px] text-slate-400">
-                {language === 'vi' ? 'Tiếng Việt' : 'English'}
+                {LANGUAGES.find((l) => l.code === language)?.label || 'English'}
               </div>
             </div>
 
-            <div className="flex rounded-xl p-1 bg-slate-100 dark:bg-slate-800">
-              <button
-                type="button"
-                onClick={() => setLanguage('en')}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition ${
-                  language === 'en'
-                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                    : 'text-slate-500'
-                }`}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage('vi')}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition ${
-                  language === 'vi'
-                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                    : 'text-slate-500'
-                }`}
-              >
-                VI
-              </button>
-            </div>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as Language)}
+              className="text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* AI Security Guard Toggle */}

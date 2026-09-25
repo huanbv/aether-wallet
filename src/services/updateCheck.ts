@@ -10,7 +10,7 @@ const REPO = 'huanbv/aether-wallet';
 
 // Fallback used only when the extension manifest isn't available (e.g. the
 // standalone web preview). Keep this in sync with public/manifest.json "version".
-export const FALLBACK_VERSION = '1.0.5';
+export const FALLBACK_VERSION = '1.0.6';
 
 /**
  * True when installed from the Chrome Web Store. The store injects an
