@@ -1,0 +1,56 @@
+{
+  "manifest_version": 3,
+  "name": "AetherWallet - Non-Custodial Web3 Wallet",
+  "short_name": "AetherWallet",
+  "description": "100% Non-custodial open-source Web3 wallet extension with AES-256-GCM encryption, bilingual support (VI/EN), and Gemini AI Security Guard.",
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Open AetherWallet",
+    "default_icon": {
+      "16": "wallet-icon.svg",
+      "48": "wallet-icon.svg",
+      "128": "wallet-icon.svg"
+    }
+  },
+  "icons": {
+    "16": "wallet-icon.svg",
+    "48": "wallet-icon.svg",
+    "128": "wallet-icon.svg"
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*/*", "http://localhost/*"],
+      "js": ["contentScript.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inpage.js", "wallet-icon.svg"],
+      "matches": ["https://*/*", "http://localhost/*"],
+      "use_dynamic_url": true
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none';"
+  },
+  "cross_origin_opener_policy": {
+    "value": "same-origin"
+  },
+  "cross_origin_embedder_policy": {
+    "value": "require-corp"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "AetherWallet - Open-Source Web3 Extension Wallet",
+  "description": "Non-custodial open-source Web3 wallet extension with AES-256-GCM encryption, bilingual support (VI/EN), multi-chain EVM, custom RPCs, and Gemini AI Transaction Guard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
