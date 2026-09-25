@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useApp } from '../context/AppContext';
 import { X, Copy, Check, QrCode, AlertTriangle, ExternalLink } from 'lucide-react';
 
@@ -18,10 +19,6 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) =
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  // Generate SVG-based QR visual representation
-  // We can render a high-contrast QR matrix pattern or standard QR image
-  const qrDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${currentAccount.address}&bgcolor=ffffff&color=0f172a&margin=8`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
@@ -45,13 +42,16 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({ isOpen, onClose }) =
           </p>
         </div>
 
-        {/* QR Code Container */}
+        {/* QR Code Container — generated locally (no external request, privacy-safe) */}
         <div className="p-3 bg-white rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 mb-4">
-          <img
-            src={qrDataUrl}
-            alt="Wallet QR Code"
-            className="w-48 h-48 rounded-xl object-contain"
-            loading="eager"
+          <QRCodeSVG
+            value={currentAccount.address}
+            size={192}
+            level="M"
+            marginSize={2}
+            bgColor="#ffffff"
+            fgColor="#0f172a"
+            className="w-48 h-48 rounded-xl"
           />
         </div>
 
