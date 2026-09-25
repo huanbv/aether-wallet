@@ -216,6 +216,11 @@ npm run build
 
 Xem đầy đủ tại [Releases](https://github.com/huanbv/aether-wallet/releases).
 
+### v1.0.5
+- **Token tùy chỉnh:** thêm token ERC-20 bất kỳ bằng địa chỉ hợp đồng (tự phát hiện ký hiệu + decimals), hiển thị số dư và gửi được như USDT/USDC; có nút xóa.
+- **Giá USD thật:** lấy giá coin gốc (ETH/BNB/POL/AVAX) + stablecoin từ CoinGecko (cache 5 phút, tự fallback ước tính nếu API lỗi).
+- Lịch sử giao dịch token đã hoạt động từ v1.0.4 (ghi theo ký hiệu token).
+
 ### v1.0.4
 - **Gửi được USDT / USDC** (chuyển token ERC-20): chọn tài sản trong màn Gửi, ví tự tạo calldata `transfer` (phí gas trả bằng coin gốc). AI Guard vẫn kiểm tra địa chỉ người nhận + giải mã calldata như thường.
 

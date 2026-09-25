@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { formatAddress } from '../utils/wallet';
+import { formatAddress, getTokensForChain } from '../utils/wallet';
 import {
   ArrowUpRight,
   ArrowDownLeft,
@@ -11,10 +11,10 @@ import {
   Coins,
   History,
   Sparkles,
-  ShieldCheck,
   Clock,
-  CheckCircle2,
   Plus,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -35,12 +35,47 @@ export const Dashboard: React.FC<DashboardProps> = ({
     refreshBalance,
     tokens,
     tokenBalances,
+    prices,
+    addCustomToken,
+    removeCustomToken,
     transactions,
     aiGuardEnabled,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'TOKENS' | 'ACTIVITY'>('TOKENS');
   const [copied, setCopied] = useState(false);
+
+  // Add custom token form
+  const [showAddToken, setShowAddToken] = useState(false);
+  const [newTokenAddr, setNewTokenAddr] = useState('');
+  const [addTokenErr, setAddTokenErr] = useState('');
+  const [addingToken, setAddingToken] = useState(false);
+
+  const builtinAddrs = new Set(
+    getTokensForChain(currentNetwork.chainId).map((t) => t.address.toLowerCase())
+  );
+
+  // Real USD price for the native coin (falls back to a rough estimate if the API is unavailable)
+  const nativeSym = currentNetwork.symbol.toUpperCase();
+  const priceFallback =
+    nativeSym === 'ETH' ? 2650 : nativeSym === 'BNB' ? 580 : nativeSym === 'POL' ? 0.45 : nativeSym === 'AVAX' ? 30 : nativeSym === 'SEPOLIAETH' ? 0 : 1;
+  const nativePrice = prices[nativeSym] ?? priceFallback;
+
+  const handleAddToken = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddTokenErr('');
+    try {
+      setAddingToken(true);
+      await addCustomToken(newTokenAddr.trim());
+      setNewTokenAddr('');
+      setShowAddToken(false);
+      refreshBalance();
+    } catch (err: any) {
+      setAddTokenErr(err?.message || 'Could not add token');
+    } finally {
+      setAddingToken(false);
+    }
+  };
 
   const handleCopy = () => {
     if (!currentAccount) return;
@@ -49,17 +84,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Approximate USD value for UI feel
-  const estimatedPriceUsd =
-    currentNetwork.symbol === 'ETH' || currentNetwork.symbol === 'SepoliaETH'
-      ? 2650
-      : currentNetwork.symbol === 'BNB'
-      ? 580
-      : currentNetwork.symbol === 'POL'
-      ? 0.45
-      : 1.0;
-
-  const totalUsd = (parseFloat(balance || '0') * estimatedPriceUsd).toFixed(2);
+  const totalUsd = (parseFloat(balance || '0') * nativePrice).toFixed(2);
 
   return (
     <div className="flex-1 flex flex-col p-4 space-y-4 animate-fade-in max-w-md mx-auto w-full">
@@ -221,43 +246,104 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          {/* Built-in Stablecoins (USDT / USDC) for this network */}
+          {/* ERC-20 tokens (built-in stablecoins + user custom) */}
           {tokens.map((tk) => {
-            const tBal = tokenBalances[tk.address] ?? '0.00';
-            const isUSDT = tk.symbol === 'USDT';
+            const tBal = tokenBalances[tk.address] ?? '0';
+            const isCustom = !builtinAddrs.has(tk.address.toLowerCase());
+            const tPrice = prices[tk.symbol.toUpperCase()];
+            const tUsd = typeof tPrice === 'number' ? (parseFloat(tBal) * tPrice).toFixed(2) : null;
+            const badge = tk.symbol === 'USDT' ? 'bg-emerald-500' : tk.symbol === 'USDC' ? 'bg-blue-500' : 'bg-purple-500';
             return (
               <div
                 key={tk.address}
                 className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700 transition"
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-10 w-10 rounded-xl text-white flex items-center justify-center font-bold text-[11px] shadow-xs ${
-                      isUSDT ? 'bg-emerald-500' : 'bg-blue-500'
-                    }`}
-                  >
-                    {tk.symbol}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`h-10 w-10 rounded-xl text-white flex items-center justify-center font-bold text-[10px] shadow-xs shrink-0 ${badge}`}>
+                    {tk.symbol.slice(0, 4)}
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
                       {tk.symbol}
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-normal">
-                        {t('customToken')}
-                      </span>
+                      {isCustom && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-normal">
+                          {t('customToken')}
+                        </span>
+                      )}
                     </div>
-                    <div className="text-xs text-slate-400">{tk.name}</div>
+                    <div className="text-xs text-slate-400 font-mono truncate">
+                      {formatAddress(tk.address)}
+                    </div>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <div className="text-sm font-bold font-mono text-slate-900 dark:text-white">
-                    {tBal}
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="text-right">
+                    <div className="text-sm font-bold font-mono text-slate-900 dark:text-white">
+                      {tBal}
+                    </div>
+                    <div className="text-xs text-slate-400 font-mono">
+                      {tUsd !== null ? `≈ $${tUsd}` : '—'}
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-400 font-mono">≈ ${tBal}</div>
+                  {isCustom && (
+                    <button
+                      onClick={() => removeCustomToken(tk.address)}
+                      title={t('delete')}
+                      className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })}
+
+          {/* Add custom token */}
+          {!showAddToken ? (
+            <button
+              type="button"
+              onClick={() => { setShowAddToken(true); setAddTokenErr(''); }}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {t('addCustomToken')}
+            </button>
+          ) : (
+            <form onSubmit={handleAddToken} className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{t('addCustomToken')}</span>
+                <button type="button" onClick={() => setShowAddToken(false)} className="p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              {addTokenErr && (
+                <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 text-[11px]">
+                  {addTokenErr}
+                </div>
+              )}
+              <input
+                type="text"
+                required
+                value={newTokenAddr}
+                onChange={(e) => setNewTokenAddr(e.target.value)}
+                placeholder={t('tokenContractAddress')}
+                className="w-full text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                type="submit"
+                disabled={addingToken || !newTokenAddr.trim()}
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold transition cursor-pointer"
+              >
+                {addingToken ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                {t('addCustomToken')}
+              </button>
+              <p className="text-[10px] text-slate-400">
+                {currentNetwork.name} · {t('tokenSymbol')}/{t('tokenDecimals')} auto-detected
+              </p>
+            </form>
+          )}
         </div>
       )}
 

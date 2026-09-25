@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   type Language,
   type TranslationDictionary,
@@ -14,6 +14,9 @@ import {
   fetchAccountBalance,
   getTokensForChain,
   fetchTokenBalance,
+  fetchTokenMetadata,
+  isAddress,
+  getAddress,
 } from '../utils/wallet';
 import {
   encryptData,
@@ -22,6 +25,7 @@ import {
   type EncryptedPayload,
 } from '../utils/crypto';
 import { DEFAULT_GEMINI_MODEL } from '../services/aiSecurity';
+import { fetchUsdPrices, type PriceMap } from '../services/priceService';
 
 export interface TransactionRecord {
   hash: string;
@@ -82,6 +86,9 @@ interface AppContextType {
   refreshBalance: () => Promise<void>;
   tokens: TokenConfig[];
   tokenBalances: Record<string, string>;
+  prices: PriceMap;
+  addCustomToken: (address: string) => Promise<TokenConfig>;
+  removeCustomToken: (address: string) => Promise<void>;
   transactions: TransactionRecord[];
   addTransactionRecord: (tx: TransactionRecord) => void;
 
@@ -108,6 +115,7 @@ const STORAGE_KEYS = {
   AI_GUARD: 'aether_ai_guard_enabled',
   GEMINI_KEY: 'aether_encrypted_gemini_key', // EncryptedPayload (AES-256-GCM w/ master password)
   GEMINI_MODEL: 'aether_gemini_model', // plaintext model id (not sensitive)
+  CUSTOM_TOKENS: 'aether_custom_tokens', // user-added ERC-20 tokens
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -129,6 +137,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [balance, setBalance] = useState<string>('0.00');
   const [tokenBalances, setTokenBalances] = useState<Record<string, string>>({});
+  const [customTokens, setCustomTokens] = useState<TokenConfig[]>([]);
+  const [prices, setPrices] = useState<PriceMap>({ USDT: 1, USDC: 1 });
   const [isRefreshingBalance, setIsRefreshingBalance] = useState<boolean>(false);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [aiGuardEnabled, setAiGuardEnabledState] = useState<boolean>(true);
@@ -168,6 +178,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (typeof savedModel === 'string' && savedModel.trim()) {
           setGeminiModel(savedModel.trim());
         }
+
+        // Load user's custom tokens
+        const savedTokens = await StorageEngine.get<TokenConfig[]>(STORAGE_KEYS.CUSTOM_TOKENS);
+        if (savedTokens && Array.isArray(savedTokens)) {
+          setCustomTokens(savedTokens);
+        }
+
+        // Fetch USD prices (cached, best-effort — never blocks the UI)
+        fetchUsdPrices().then(setPrices).catch(() => {});
 
         // Load Custom Networks
         const savedNets = await StorageEngine.get<NetworkConfig[]>(STORAGE_KEYS.NETWORKS);
@@ -242,6 +261,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     networks.find((n) => n.id === currentNetworkId) || networks[0] || DEFAULT_NETWORKS[0];
   const currentAccount = accounts[currentAccountIndex] || accounts[0] || null;
 
+  // Tokens available on the current chain: built-in stablecoins + user custom tokens
+  const tokens = useMemo(() => {
+    const chainId = currentNetwork?.chainId ?? 0;
+    return [
+      ...getTokensForChain(chainId),
+      ...customTokens.filter((tk) => tk.chainId === chainId),
+    ];
+  }, [currentNetwork?.chainId, customTokens]);
+
   // Refresh Account Balance on network or account switch
   const refreshBalance = useCallback(async () => {
     if (!currentAccount || !currentNetwork) {
@@ -255,10 +283,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const b = await fetchAccountBalance(currentNetwork.rpcUrl, currentAccount.address);
       setBalance(b);
 
-      // Fetch built-in ERC-20 (USDT/USDC) balances for this chain in parallel
-      const toks = getTokensForChain(currentNetwork.chainId);
+      // Fetch ERC-20 balances (built-in + custom) for this chain in parallel
       const entries = await Promise.all(
-        toks.map(
+        tokens.map(
           async (tk) =>
             [
               tk.address,
@@ -277,9 +304,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } finally {
       setIsRefreshingBalance(false);
     }
-  }, [currentAccount, currentNetwork]);
-
-  const tokens = getTokensForChain(currentNetwork?.chainId ?? 0);
+  }, [currentAccount, currentNetwork, tokens]);
 
   useEffect(() => {
     if (isUnlocked && currentAccount) {
@@ -517,6 +542,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await StorageEngine.set(STORAGE_KEYS.SELECTED_NET, DEFAULT_NETWORKS[0].id);
   };
 
+  // Add a user custom ERC-20 token by contract address (auto-detects symbol/decimals)
+  const addCustomToken = async (address: string): Promise<TokenConfig> => {
+    if (!isAddress(address.trim())) {
+      throw new Error('Invalid token contract address');
+    }
+    const normalized = getAddress(address.trim());
+    const chainId = currentNetwork.chainId;
+
+    // Reject duplicates (built-in or already added)
+    const exists = tokens.some((tk) => tk.address.toLowerCase() === normalized.toLowerCase());
+    if (exists) {
+      throw new Error('Token already added on this network');
+    }
+
+    const meta = await fetchTokenMetadata(currentNetwork.rpcUrl, normalized);
+    const token: TokenConfig = {
+      chainId,
+      symbol: meta.symbol,
+      name: meta.symbol,
+      address: normalized,
+      decimals: meta.decimals,
+    };
+
+    const updated = [...customTokens, token];
+    setCustomTokens(updated);
+    await StorageEngine.set(STORAGE_KEYS.CUSTOM_TOKENS, updated);
+    return token;
+  };
+
+  // Remove a user custom token (built-in tokens can't be removed)
+  const removeCustomToken = async (address: string): Promise<void> => {
+    const updated = customTokens.filter(
+      (tk) => tk.address.toLowerCase() !== address.toLowerCase()
+    );
+    setCustomTokens(updated);
+    await StorageEngine.set(STORAGE_KEYS.CUSTOM_TOKENS, updated);
+  };
+
   // Record Transaction to Local Activity History
   const addTransactionRecord = (tx: TransactionRecord) => {
     setTransactions((prev) => {
@@ -560,6 +623,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         refreshBalance,
         tokens,
         tokenBalances,
+        prices,
+        addCustomToken,
+        removeCustomToken,
         transactions,
         addTransactionRecord,
         aiGuardEnabled,

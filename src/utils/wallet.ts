@@ -182,6 +182,25 @@ export function buildErc20TransferData(
 }
 
 /**
+ * Read an ERC-20 token's symbol + decimals from its contract (for adding a
+ * custom token by address). Throws if the address is not a readable ERC-20.
+ */
+export async function fetchTokenMetadata(
+  rpcUrl: string,
+  tokenAddress: string
+): Promise<{ symbol: string; decimals: number }> {
+  const client = createPublicClient({
+    transport: http(rpcUrl, { timeout: 8000 }),
+  });
+  const address = getAddress(tokenAddress);
+  const [symbol, decimals] = await Promise.all([
+    client.readContract({ address, abi: erc20Abi, functionName: 'symbol' }),
+    client.readContract({ address, abi: erc20Abi, functionName: 'decimals' }),
+  ]);
+  return { symbol: String(symbol), decimals: Number(decimals) };
+}
+
+/**
  * Read an ERC-20 token balance via RPC and format it using the token decimals.
  * Returns '0.00' on any failure (e.g. token not deployed on this network).
  */
