@@ -84,27 +84,38 @@
 
 ---
 
-### Hướng Dẫn Cài Đặt & Build Mã Nguồn
+### ⚡ Cài Đặt Nhanh (không cần build)
+
+Nếu bạn chỉ muốn dùng ví, hãy tải bản đã build sẵn — không cần Node, không cần build:
+
+1. Vào [**Releases**](https://github.com/huanbv/aether-wallet/releases/latest) và tải file `aether-wallet-v1.0.0-chrome.zip`.
+2. Giải nén → bạn được thư mục `aether-wallet`.
+3. Mở `chrome://extensions/`, bật **Chế độ dành cho nhà phát triển (Developer mode)** ở góc trên bên phải.
+4. Nhấn **Tải tiện ích đã giải nén (Load unpacked)** → chọn thư mục `aether-wallet` vừa giải nén.
+
+---
+
+### Hướng Dẫn Cài Đặt & Build Mã Nguồn (dành cho lập trình viên)
 
 #### 1. Yêu cầu hệ thống
 - **Node.js**: Phiên bản 18.0.0 trở lên.
-- **npm** hoặc **pnpm** / **yarn**.
+- **npm** hoặc **pnpm** / **yarn** / **bun**.
 
 #### 2. Cài đặt các thư viện
 ```bash
 # Clone repo về máy
-git clone https://github.com/your-username/aether-wallet.git
+git clone https://github.com/huanbv/aether-wallet.git
 cd aether-wallet
 
 # Cài đặt dependencies
-npm install
+npm install   # hoặc: bun install
 ```
 
 #### 3. Chạy môi trường phát triển (Dev Mode)
 ```bash
 npm run dev
 ```
-Mở trình duyệt tại `http://localhost:3000`. Bạn có thể tương tác với ví ở cả 2 chế độ:
+Mở trình duyệt tại địa chỉ Vite in ra (mặc định `http://localhost:5173`). Bạn có thể tương tác với ví ở cả 2 chế độ:
 - **Kích thước Extension Popup (380x600px)**: Trải nghiệm y hệt khi mở popup trên thanh công cụ Chrome.
 - **Chế độ Mở Rộng (Expanded View)**: Trải nghiệm toàn màn hình tiện lợi khi phát triển.
 
@@ -142,11 +153,20 @@ Thư mục `/dist` sau khi build sẽ chứa đầy đủ:
 - **Multi-Chain EVM & Custom RPCs**: Preloaded with Ethereum, BNB Chain, Polygon, Arbitrum, Base, Sepolia, plus instant support for any custom RPC node.
 - **EIP-1193 Inpage Provider**: Injects `window.ethereum` into the webpage DOM for compatibility with dApps.
 
-### Local Development & Build Steps
+### Quick Install (no build required)
+
+If you just want to use the wallet, download the pre-built package — no Node, no build:
+
+1. Go to [**Releases**](https://github.com/huanbv/aether-wallet/releases/latest) and download `aether-wallet-v1.0.0-chrome.zip`.
+2. Unzip it → you get an `aether-wallet` folder.
+3. Open `chrome://extensions/`, enable **Developer mode** (top-right).
+4. Click **Load unpacked** and select the unzipped `aether-wallet` folder.
+
+### Local Development & Build Steps (for developers)
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/your-username/aether-wallet.git
+git clone https://github.com/huanbv/aether-wallet.git
 cd aether-wallet
 
 # 2. Install dependencies
