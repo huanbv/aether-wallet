@@ -7,10 +7,13 @@ import {
 import {
   type WalletAccount,
   type NetworkConfig,
+  type TokenConfig,
   DEFAULT_NETWORKS,
   deriveAccountFromMnemonic,
   importAccountFromPrivateKey,
   fetchAccountBalance,
+  getTokensForChain,
+  fetchTokenBalance,
 } from '../utils/wallet';
 import {
   encryptData,
@@ -77,6 +80,8 @@ interface AppContextType {
   balance: string;
   isRefreshingBalance: boolean;
   refreshBalance: () => Promise<void>;
+  tokens: TokenConfig[];
+  tokenBalances: Record<string, string>;
   transactions: TransactionRecord[];
   addTransactionRecord: (tx: TransactionRecord) => void;
 
@@ -123,6 +128,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentNetworkId, setCurrentNetworkId] = useState<string>(DEFAULT_NETWORKS[0].id);
 
   const [balance, setBalance] = useState<string>('0.00');
+  const [tokenBalances, setTokenBalances] = useState<Record<string, string>>({});
   const [isRefreshingBalance, setIsRefreshingBalance] = useState<boolean>(false);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [aiGuardEnabled, setAiGuardEnabledState] = useState<boolean>(true);
@@ -240,6 +246,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const refreshBalance = useCallback(async () => {
     if (!currentAccount || !currentNetwork) {
       setBalance('0.00');
+      setTokenBalances({});
       return;
     }
 
@@ -247,12 +254,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setIsRefreshingBalance(true);
       const b = await fetchAccountBalance(currentNetwork.rpcUrl, currentAccount.address);
       setBalance(b);
+
+      // Fetch built-in ERC-20 (USDT/USDC) balances for this chain in parallel
+      const toks = getTokensForChain(currentNetwork.chainId);
+      const entries = await Promise.all(
+        toks.map(
+          async (tk) =>
+            [
+              tk.address,
+              await fetchTokenBalance(
+                currentNetwork.rpcUrl,
+                tk.address,
+                tk.decimals,
+                currentAccount.address
+              ),
+            ] as const
+        )
+      );
+      setTokenBalances(Object.fromEntries(entries));
     } catch (e) {
       console.warn('Balance refresh failed:', e);
     } finally {
       setIsRefreshingBalance(false);
     }
   }, [currentAccount, currentNetwork]);
+
+  const tokens = getTokensForChain(currentNetwork?.chainId ?? 0);
 
   useEffect(() => {
     if (isUnlocked && currentAccount) {
@@ -531,6 +558,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         balance,
         isRefreshingBalance,
         refreshBalance,
+        tokens,
+        tokenBalances,
         transactions,
         addTransactionRecord,
         aiGuardEnabled,

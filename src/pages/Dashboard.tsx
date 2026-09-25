@@ -33,6 +33,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     balance,
     isRefreshingBalance,
     refreshBalance,
+    tokens,
+    tokenBalances,
     transactions,
     aiGuardEnabled,
   } = useApp();
@@ -218,6 +220,44 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Built-in Stablecoins (USDT / USDC) for this network */}
+          {tokens.map((tk) => {
+            const tBal = tokenBalances[tk.address] ?? '0.00';
+            const isUSDT = tk.symbol === 'USDT';
+            return (
+              <div
+                key={tk.address}
+                className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`h-10 w-10 rounded-xl text-white flex items-center justify-center font-bold text-[11px] shadow-xs ${
+                      isUSDT ? 'bg-emerald-500' : 'bg-blue-500'
+                    }`}
+                  >
+                    {tk.symbol}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      {tk.symbol}
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-normal">
+                        {t('customToken')}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-400">{tk.name}</div>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-sm font-bold font-mono text-slate-900 dark:text-white">
+                    {tBal}
+                  </div>
+                  <div className="text-xs text-slate-400 font-mono">≈ ${tBal}</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

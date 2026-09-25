@@ -43,7 +43,8 @@
 - **Thông Báo Bản Mới Trong App**: Tự kiểm tra GitHub Releases và hiện banner khi có phiên bản mới hơn.
 - **QR Nhận Tiền Tạo Cục Bộ**: Mã QR được vẽ ngay trên máy (SVG), không gọi dịch vụ ngoài, không lộ địa chỉ ví.
 - **Hỗ Trợ Song Ngữ (Tiếng Việt & English)** + **Giao Diện Sáng / Tối**: i18n chuyển đổi tức thì, thiết kế Tailwind CSS.
-- **Đa Mạng EVM & Tùy Chỉnh RPC**: Ethereum, BNB Chain, Polygon, Arbitrum, Base, Sepolia và thêm Custom RPC tùy ý.
+- **Đa Mạng EVM & Tùy Chỉnh RPC**: Ethereum, BNB Chain, Polygon, Arbitrum, Base, Optimism, Avalanche C-Chain, Sepolia và thêm Custom RPC tùy ý.
+- **Stablecoin ERC-20 (USDT/USDC)**: Hiển thị số dư USDT/USDC theo từng mạng (địa chỉ hợp đồng chuẩn, đúng decimals).
 - **Chuẩn EIP-1193**: Tiêm `window.ethereum` vào trang web để kết nối Uniswap, OpenSea, PancakeSwap,...
 
 ---
@@ -166,7 +167,8 @@ Thư mục `/dist` sau khi build sẽ chứa đầy đủ:
 - **EIP-155 Replay-Protected Signing**: Every transaction is bound to its `chainId`, preventing cross-chain replay.
 - **In-App Update Notifications**: Checks GitHub Releases and shows a banner when a newer version is available (auto-disabled on Web Store installs).
 - **Locally-Generated Receive QR**: The QR is rendered on-device (SVG) — no third-party request, no address leak.
-- **Multi-Chain EVM & Custom RPCs**: Preloaded with Ethereum, BNB Chain, Polygon, Arbitrum, Base, Sepolia, plus instant support for any custom RPC node.
+- **Multi-Chain EVM & Custom RPCs**: Preloaded with Ethereum, BNB Chain, Polygon, Arbitrum, Base, Optimism, Avalanche C-Chain, Sepolia, plus instant support for any custom RPC node.
+- **Built-in Stablecoins (USDT/USDC)**: Shows USDT/USDC balances per network with canonical contract addresses and correct decimals.
 - **EIP-1193 Inpage Provider**: Injects `window.ethereum` into the webpage DOM for compatibility with dApps.
 
 ### Quick Install (no build required)
@@ -213,6 +215,11 @@ npm run build
 ## 🕒 Changelog / Lịch Sử Phiên Bản
 
 Xem đầy đủ tại [Releases](https://github.com/huanbv/aether-wallet/releases).
+
+### v1.0.3
+- Thêm **mạng phổ biến**: OP Mainnet (Optimism) và Avalanche C-Chain.
+- Hỗ trợ **stablecoin ERC-20 (USDT / USDC)**: hiển thị số dư trên Dashboard cho các mạng ETH, BNB, Polygon, Arbitrum, Base, Optimism, Avalanche (địa chỉ hợp đồng + decimals chuẩn theo từng mạng, đã đối chiếu on-chain).
+- **Sửa RPC mặc định** của Ethereum/BNB/Polygon/Arbitrum sang `publicnode` (endpoint `ankr` công khai cũ trả lỗi) → đọc số dư coin gốc & token ổn định. *(Ví đã lưu mạng cũ: bấm "Khôi phục mạng mặc định" trong Cài đặt để áp dụng.)*
 
 ### v1.0.2
 - Chuẩn bị Chrome Web Store: icon PNG 16/48/128, bỏ quyền thừa `unlimitedStorage`, thêm `PRIVACY.md` + trang [Privacy Pages](https://huanbv.github.io/aether-wallet/) và guide đăng store.

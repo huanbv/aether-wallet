@@ -6,6 +6,8 @@ import {
   http,
   formatEther,
   parseEther,
+  formatUnits,
+  erc20Abi,
   isAddress,
   getAddress,
   type Hash,
@@ -41,7 +43,7 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     id: 'ethereum-mainnet',
     chainId: 1,
     name: 'Ethereum Mainnet',
-    rpcUrl: 'https://rpc.ankr.com/eth',
+    rpcUrl: 'https://ethereum-rpc.publicnode.com',
     symbol: 'ETH',
     decimals: 18,
     explorerUrl: 'https://etherscan.io',
@@ -51,7 +53,7 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     id: 'bnb-smart-chain',
     chainId: 56,
     name: 'BNB Smart Chain',
-    rpcUrl: 'https://rpc.ankr.com/bsc',
+    rpcUrl: 'https://bsc-rpc.publicnode.com',
     symbol: 'BNB',
     decimals: 18,
     explorerUrl: 'https://bscscan.com',
@@ -61,7 +63,7 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     id: 'polygon-mainnet',
     chainId: 137,
     name: 'Polygon PoS',
-    rpcUrl: 'https://rpc.ankr.com/polygon',
+    rpcUrl: 'https://polygon-bor-rpc.publicnode.com',
     symbol: 'POL',
     decimals: 18,
     explorerUrl: 'https://polygonscan.com',
@@ -71,7 +73,7 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     id: 'arbitrum-one',
     chainId: 42161,
     name: 'Arbitrum One',
-    rpcUrl: 'https://rpc.ankr.com/arbitrum',
+    rpcUrl: 'https://arbitrum-one-rpc.publicnode.com',
     symbol: 'ETH',
     decimals: 18,
     explorerUrl: 'https://arbiscan.io',
@@ -88,6 +90,26 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     isTestnet: false,
   },
   {
+    id: 'optimism-mainnet',
+    chainId: 10,
+    name: 'OP Mainnet (Optimism)',
+    rpcUrl: 'https://mainnet.optimism.io',
+    symbol: 'ETH',
+    decimals: 18,
+    explorerUrl: 'https://optimistic.etherscan.io',
+    isTestnet: false,
+  },
+  {
+    id: 'avalanche-c-chain',
+    chainId: 43114,
+    name: 'Avalanche C-Chain',
+    rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
+    symbol: 'AVAX',
+    decimals: 18,
+    explorerUrl: 'https://snowtrace.io',
+    isTestnet: false,
+  },
+  {
     id: 'sepolia-testnet',
     chainId: 11155111,
     name: 'Sepolia Testnet',
@@ -98,6 +120,77 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     isTestnet: true,
   },
 ];
+
+export interface TokenConfig {
+  chainId: number;
+  symbol: string;
+  name: string;
+  address: string; // ERC-20 contract address
+  decimals: number;
+}
+
+/**
+ * Built-in stablecoin registry (USDT / USDC) per chain, with canonical contract
+ * addresses and decimals. Note BNB Chain USDT/USDC use 18 decimals, not 6.
+ */
+export const DEFAULT_TOKENS: TokenConfig[] = [
+  // Ethereum
+  { chainId: 1, symbol: 'USDT', name: 'Tether USD', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', decimals: 6 },
+  { chainId: 1, symbol: 'USDC', name: 'USD Coin', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', decimals: 6 },
+  // BNB Smart Chain (18 decimals)
+  { chainId: 56, symbol: 'USDT', name: 'Tether USD', address: '0x55d398326f99059fF775485246999027B3197955', decimals: 18 },
+  { chainId: 56, symbol: 'USDC', name: 'USD Coin', address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', decimals: 18 },
+  // Polygon
+  { chainId: 137, symbol: 'USDT', name: 'Tether USD', address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', decimals: 6 },
+  { chainId: 137, symbol: 'USDC', name: 'USD Coin', address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', decimals: 6 },
+  // Arbitrum One
+  { chainId: 42161, symbol: 'USDT', name: 'Tether USD', address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', decimals: 6 },
+  { chainId: 42161, symbol: 'USDC', name: 'USD Coin', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', decimals: 6 },
+  // Base
+  { chainId: 8453, symbol: 'USDC', name: 'USD Coin', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6 },
+  { chainId: 8453, symbol: 'USDT', name: 'Tether USD', address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2', decimals: 6 },
+  // OP Mainnet
+  { chainId: 10, symbol: 'USDT', name: 'Tether USD', address: '0x94b008aA00579c1307B0EF2c499aD98a8ce58e58', decimals: 6 },
+  { chainId: 10, symbol: 'USDC', name: 'USD Coin', address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85', decimals: 6 },
+  // Avalanche C-Chain
+  { chainId: 43114, symbol: 'USDT', name: 'TetherToken', address: '0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7', decimals: 6 },
+  { chainId: 43114, symbol: 'USDC', name: 'USD Coin', address: '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E', decimals: 6 },
+];
+
+/** Return the built-in tokens registered for a given chain id. */
+export function getTokensForChain(chainId: number): TokenConfig[] {
+  return DEFAULT_TOKENS.filter((t) => t.chainId === chainId);
+}
+
+/**
+ * Read an ERC-20 token balance via RPC and format it using the token decimals.
+ * Returns '0.00' on any failure (e.g. token not deployed on this network).
+ */
+export async function fetchTokenBalance(
+  rpcUrl: string,
+  tokenAddress: string,
+  decimals: number,
+  ownerAddress: string
+): Promise<string> {
+  try {
+    const client = createPublicClient({
+      transport: http(rpcUrl, { timeout: 8000 }),
+    });
+
+    const raw = await client.readContract({
+      address: getAddress(tokenAddress),
+      abi: erc20Abi,
+      functionName: 'balanceOf',
+      args: [getAddress(ownerAddress)],
+    });
+
+    const num = parseFloat(formatUnits(raw as bigint, decimals));
+    return isNaN(num) ? '0.00' : num.toFixed(2);
+  } catch (error) {
+    console.warn(`[AetherWallet] Token balance fetch failed (${tokenAddress}):`, error);
+    return '0.00';
+  }
+}
 
 /**
  * Generate a new cryptographically secure BIP-39 mnemonic phrase (12 or 24 words)
