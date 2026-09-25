@@ -10,7 +10,23 @@ const REPO = 'huanbv/aether-wallet';
 
 // Fallback used only when the extension manifest isn't available (e.g. the
 // standalone web preview). Keep this in sync with public/manifest.json "version".
-export const FALLBACK_VERSION = '1.0.1';
+export const FALLBACK_VERSION = '1.0.2';
+
+/**
+ * True when installed from the Chrome Web Store. The store injects an
+ * `update_url` into the runtime manifest and auto-updates the extension, so the
+ * GitHub update banner is unnecessary (and undesirable) in that case.
+ */
+export function isWebStoreInstall(): boolean {
+  try {
+    if (typeof chrome !== 'undefined' && chrome.runtime?.getManifest) {
+      return Boolean(chrome.runtime.getManifest().update_url);
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
 
 export interface UpdateInfo {
   available: boolean;
@@ -57,6 +73,9 @@ export function isNewer(remote: string, current: string): boolean {
  * Returns null on any network/parse failure (caller simply shows no banner).
  */
 export async function checkForUpdate(): Promise<UpdateInfo | null> {
+  // Store installs auto-update via Chrome; don't nag the user with a banner.
+  if (isWebStoreInstall()) return null;
+
   const currentVersion = getCurrentVersion();
   try {
     const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
