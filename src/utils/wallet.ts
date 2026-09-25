@@ -7,6 +7,8 @@ import {
   formatEther,
   parseEther,
   formatUnits,
+  parseUnits,
+  encodeFunctionData,
   erc20Abi,
   isAddress,
   getAddress,
@@ -163,6 +165,23 @@ export function getTokensForChain(chainId: number): TokenConfig[] {
 }
 
 /**
+ * Build ERC-20 transfer(to, amount) calldata. `amount` is a human-readable
+ * decimal string that is scaled by the token's decimals. Throws if the amount
+ * has more decimal places than the token supports.
+ */
+export function buildErc20TransferData(
+  to: string,
+  amount: string,
+  decimals: number
+): Hex {
+  return encodeFunctionData({
+    abi: erc20Abi,
+    functionName: 'transfer',
+    args: [getAddress(to), parseUnits(amount, decimals)],
+  });
+}
+
+/**
  * Read an ERC-20 token balance via RPC and format it using the token decimals.
  * Returns '0.00' on any failure (e.g. token not deployed on this network).
  */
@@ -185,10 +204,11 @@ export async function fetchTokenBalance(
     });
 
     const num = parseFloat(formatUnits(raw as bigint, decimals));
-    return isNaN(num) ? '0.00' : num.toFixed(2);
+    // Keep real precision so "Max" never exceeds the actual on-chain balance.
+    return isNaN(num) ? '0' : String(num);
   } catch (error) {
     console.warn(`[AetherWallet] Token balance fetch failed (${tokenAddress}):`, error);
-    return '0.00';
+    return '0';
   }
 }
 

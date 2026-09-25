@@ -108,8 +108,10 @@ export interface TranslationDictionary {
   gasFeeEstimated: string;
   totalCost: string;
   insufficientFunds: string;
+  insufficientGasNative: string;
   invalidRecipient: string;
   invalidAmount: string;
+  assetLabel: string;
   analyzeWithAI: string;
   aiGuardTitle: string;
   aiGuardDesc: string;
@@ -310,8 +312,10 @@ export const translations: Record<Language, TranslationDictionary> = {
     gasFeeEstimated: 'Est. Network Gas',
     totalCost: 'Total (Amount + Gas)',
     insufficientFunds: 'Insufficient funds for transfer and gas fee.',
+    insufficientGasNative: 'Not enough native coin to pay the gas fee.',
     invalidRecipient: 'Please enter a valid Ethereum hex address (0x...).',
     invalidAmount: 'Please enter a valid amount greater than 0.',
+    assetLabel: 'Asset',
     analyzeWithAI: 'AI Security Guard Analysis',
     aiGuardTitle: 'Gemini AI Transaction Guard',
     aiGuardDesc: 'Real-time smart contract & calldata security audit powered by Google AI Studio.',
@@ -503,8 +507,10 @@ export const translations: Record<Language, TranslationDictionary> = {
     gasFeeEstimated: 'Ước Tính Phí Gas',
     totalCost: 'Tổng Cộng (Số tiền + Gas)',
     insufficientFunds: 'Số dư không đủ để thực hiện giao dịch và trả phí gas.',
+    insufficientGasNative: 'Không đủ coin gốc để trả phí gas.',
     invalidRecipient: 'Vui lòng nhập địa chỉ ví Ethereum hợp lệ (bắt đầu bằng 0x...).',
     invalidAmount: 'Vui lòng nhập số tiền hợp lệ lớn hơn 0.',
+    assetLabel: 'Tài sản',
     analyzeWithAI: 'Kiểm Tra An Ninh Bằng Gemini AI',
     aiGuardTitle: 'Gemini AI Transaction Guard',
     aiGuardDesc: 'Kiểm toán an ninh calldata & địa chỉ hợp đồng thông minh theo thời gian thực từ Google AI Studio.',

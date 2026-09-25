@@ -44,7 +44,7 @@
 - **QR Nhận Tiền Tạo Cục Bộ**: Mã QR được vẽ ngay trên máy (SVG), không gọi dịch vụ ngoài, không lộ địa chỉ ví.
 - **Hỗ Trợ Song Ngữ (Tiếng Việt & English)** + **Giao Diện Sáng / Tối**: i18n chuyển đổi tức thì, thiết kế Tailwind CSS.
 - **Đa Mạng EVM & Tùy Chỉnh RPC**: Ethereum, BNB Chain, Polygon, Arbitrum, Base, Optimism, Avalanche C-Chain, Sepolia và thêm Custom RPC tùy ý.
-- **Stablecoin ERC-20 (USDT/USDC)**: Hiển thị số dư USDT/USDC theo từng mạng (địa chỉ hợp đồng chuẩn, đúng decimals).
+- **Stablecoin ERC-20 (USDT/USDC)**: Hiển thị **và gửi** USDT/USDC theo từng mạng (địa chỉ hợp đồng chuẩn, đúng decimals).
 - **Chuẩn EIP-1193**: Tiêm `window.ethereum` vào trang web để kết nối Uniswap, OpenSea, PancakeSwap,...
 
 ---
@@ -168,7 +168,7 @@ Thư mục `/dist` sau khi build sẽ chứa đầy đủ:
 - **In-App Update Notifications**: Checks GitHub Releases and shows a banner when a newer version is available (auto-disabled on Web Store installs).
 - **Locally-Generated Receive QR**: The QR is rendered on-device (SVG) — no third-party request, no address leak.
 - **Multi-Chain EVM & Custom RPCs**: Preloaded with Ethereum, BNB Chain, Polygon, Arbitrum, Base, Optimism, Avalanche C-Chain, Sepolia, plus instant support for any custom RPC node.
-- **Built-in Stablecoins (USDT/USDC)**: Shows USDT/USDC balances per network with canonical contract addresses and correct decimals.
+- **Built-in Stablecoins (USDT/USDC)**: View **and send** USDT/USDC per network with canonical contract addresses and correct decimals.
 - **EIP-1193 Inpage Provider**: Injects `window.ethereum` into the webpage DOM for compatibility with dApps.
 
 ### Quick Install (no build required)
@@ -215,6 +215,9 @@ npm run build
 ## 🕒 Changelog / Lịch Sử Phiên Bản
 
 Xem đầy đủ tại [Releases](https://github.com/huanbv/aether-wallet/releases).
+
+### v1.0.4
+- **Gửi được USDT / USDC** (chuyển token ERC-20): chọn tài sản trong màn Gửi, ví tự tạo calldata `transfer` (phí gas trả bằng coin gốc). AI Guard vẫn kiểm tra địa chỉ người nhận + giải mã calldata như thường.
 
 ### v1.0.3
 - Thêm **mạng phổ biến**: OP Mainnet (Optimism) và Avalanche C-Chain.

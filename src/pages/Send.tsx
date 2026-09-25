@@ -4,6 +4,7 @@ import {
   isAddress,
   estimateTransferGas,
   broadcastTransaction,
+  buildErc20TransferData,
   formatAddress,
 } from '../utils/wallet';
 import {
@@ -38,6 +39,8 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
     currentAccount,
     currentNetwork,
     balance,
+    tokens,
+    tokenBalances,
     aiGuardEnabled,
     geminiApiKey,
     geminiModel,
@@ -68,6 +71,38 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
   const [isSending, setIsSending] = useState(false);
   const [txSuccessHash, setTxSuccessHash] = useState<string | null>(null);
 
+  // Selected asset: null = native coin, otherwise a token contract address
+  const [selectedTokenAddr, setSelectedTokenAddr] = useState<string | null>(null);
+  const selectedToken = tokens.find((tk) => tk.address === selectedTokenAddr) || null;
+  const assetSymbol = selectedToken ? selectedToken.symbol : currentNetwork.symbol;
+  const availableBalance = selectedToken
+    ? tokenBalances[selectedToken.address] ?? '0'
+    : balance;
+
+  // Reset the asset choice when switching network (tokens differ per chain)
+  useEffect(() => {
+    setSelectedTokenAddr(null);
+  }, [currentNetwork.chainId]);
+
+  // Effective on-chain transaction for the selected asset.
+  // Token transfers go to the token contract with transfer() calldata, value 0.
+  const buildEffectiveTx = (): { to: string; value: string; data: string } | null => {
+    const r = recipient.trim();
+    if (selectedToken) {
+      if (!isAddress(r)) return null;
+      try {
+        return {
+          to: selectedToken.address,
+          value: '0',
+          data: buildErc20TransferData(r, amount.trim() || '0', selectedToken.decimals),
+        };
+      } catch {
+        return null; // e.g. amount has more decimals than the token supports
+      }
+    }
+    return { to: r, value: amount.trim() || '0', data: calldata.trim() || '0x' };
+  };
+
   // Auto-audit on debounced recipient address change
   useEffect(() => {
     if (!recipient || recipient.trim().length < 10) {
@@ -86,10 +121,10 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
               toAddress: recipient.trim(),
               userAddress: currentAccount?.address,
               value: amount.trim() || '0',
-              calldata: calldata.trim() || '0x',
+              calldata: buildEffectiveTx()?.data || '0x',
               chainId: currentNetwork.chainId,
               networkName: currentNetwork.name,
-              tokenSymbol: currentNetwork.symbol,
+              tokenSymbol: assetSymbol,
             },
             { apiKey: geminiApiKey, model: geminiModel }
           );
@@ -103,20 +138,21 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [recipient, calldata, amount, currentAccount?.address, currentNetwork, geminiApiKey, geminiModel]);
+  }, [recipient, calldata, amount, selectedTokenAddr, currentAccount?.address, currentNetwork, geminiApiKey, geminiModel]);
 
   // Update Gas estimate on input changes
   useEffect(() => {
     async function updateGas() {
-      if (!currentAccount || !isAddress(recipient)) return;
+      const eff = buildEffectiveTx();
+      if (!currentAccount || !eff || !isAddress(eff.to)) return;
       try {
         setIsEstimatingGas(true);
         const est = await estimateTransferGas(
           currentNetwork.rpcUrl,
           currentAccount.address,
-          recipient,
-          amount || '0',
-          calldata
+          eff.to,
+          eff.value,
+          eff.data
         );
         setGasEstimatedEth(est.totalGasEth);
       } catch (e) {
@@ -128,7 +164,7 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
 
     const timer = setTimeout(updateGas, 400);
     return () => clearTimeout(timer);
-  }, [recipient, amount, calldata, currentAccount, currentNetwork.rpcUrl]);
+  }, [recipient, amount, calldata, selectedTokenAddr, currentAccount, currentNetwork.rpcUrl]);
 
   // Manual trigger if user wants fresh evaluation
   const handleTriggerAIAudit = async () => {
@@ -149,10 +185,10 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
           toAddress: recipient.trim(),
           userAddress: currentAccount?.address,
           value: amount.trim() || '0',
-          calldata: calldata.trim() || '0x',
+          calldata: buildEffectiveTx()?.data || '0x',
           chainId: currentNetwork.chainId,
           networkName: currentNetwork.name,
-          tokenSymbol: currentNetwork.symbol,
+          tokenSymbol: assetSymbol,
         },
         { apiKey: geminiApiKey, model: geminiModel }
       );
@@ -183,9 +219,20 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
       return;
     }
 
-    const balNum = parseFloat(balance);
     const gasNum = parseFloat(gasEstimatedEth);
-    if (valNum + gasNum > balNum) {
+    const nativeNum = parseFloat(balance);
+    const availNum = parseFloat(availableBalance);
+    if (selectedToken) {
+      // Token amount comes from the token balance; gas is still paid in native.
+      if (valNum > availNum) {
+        setInputError(t('insufficientFunds'));
+        return;
+      }
+      if (gasNum > nativeNum) {
+        setInputError(t('insufficientGasNative'));
+        return;
+      }
+    } else if (valNum + gasNum > nativeNum) {
       setInputError(t('insufficientFunds'));
       return;
     }
@@ -214,15 +261,21 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
       return;
     }
 
+    const eff = buildEffectiveTx();
+    if (!eff) {
+      setInputError(t('invalidAmount'));
+      return;
+    }
+
     try {
       setIsSending(true);
       const hash = await broadcastTransaction(
         currentNetwork.rpcUrl,
         currentAccount.privateKey,
         currentNetwork.chainId,
-        recipient.trim(),
-        amount.trim(),
-        calldata.trim() || '0x'
+        eff.to,
+        eff.value,
+        eff.data
       );
 
       setTxSuccessHash(hash);
@@ -231,7 +284,7 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
         from: currentAccount.address,
         to: recipient.trim(),
         amount: amount.trim(),
-        symbol: currentNetwork.symbol,
+        symbol: assetSymbol,
         networkId: currentNetwork.id,
         networkName: currentNetwork.name,
         timestamp: Date.now(),
@@ -248,6 +301,10 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
   };
 
   const handleMaxAmount = () => {
+    if (selectedToken) {
+      setAmount(availableBalance);
+      return;
+    }
     const balNum = parseFloat(balance);
     const gasNum = parseFloat(gasEstimatedEth);
     const maxVal = Math.max(0, balNum - gasNum).toFixed(4);
@@ -365,6 +422,48 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
             </div>
           )}
 
+          {/* Asset selector: native coin + built-in stablecoins */}
+          {tokens.length > 0 && (
+            <div>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1">
+                {t('assetLabel')}
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTokenAddr(null);
+                    setAmount('');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold border transition cursor-pointer ${
+                    !selectedToken
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400'
+                  }`}
+                >
+                  {currentNetwork.symbol}
+                </button>
+                {tokens.map((tk) => (
+                  <button
+                    key={tk.address}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTokenAddr(tk.address);
+                      setAmount('');
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold border transition cursor-pointer ${
+                      selectedTokenAddr === tk.address
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400'
+                    }`}
+                  >
+                    {tk.symbol}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Recipient Address */}
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -401,7 +500,7 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
             <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
               <span>{t('amount')}</span>
               <span className="text-slate-400 font-mono">
-                {t('availableBalance')}: {balance} {currentNetwork.symbol}
+                {t('availableBalance')}: {availableBalance} {assetSymbol}
               </span>
             </div>
             <div className="relative">
@@ -425,13 +524,14 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
                   {t('maxAmount')}
                 </button>
                 <span className="text-xs font-semibold text-slate-400">
-                  {currentNetwork.symbol}
+                  {assetSymbol}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Collapsible Advanced Calldata */}
+          {/* Collapsible Advanced Calldata (native coin only — tokens auto-build transfer calldata) */}
+          {!selectedToken && (
           <div>
             <button
               type="button"
@@ -473,6 +573,7 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
               </div>
             )}
           </div>
+          )}
 
           {/* Gas & Total Summary Card */}
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 p-3 space-y-1.5 text-xs">
@@ -485,7 +586,9 @@ export const Send: React.FC<SendProps> = ({ onBack }) => {
             <div className="flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200 pt-1 border-t border-slate-200 dark:border-slate-800">
               <span>{t('totalCost')}</span>
               <span className="font-mono text-indigo-600 dark:text-indigo-400">
-                {totalCost} {currentNetwork.symbol}
+                {selectedToken
+                  ? `${amount || '0'} ${assetSymbol} + ${gasEstimatedEth} ${currentNetwork.symbol}`
+                  : `${totalCost} ${currentNetwork.symbol}`}
               </span>
             </div>
           </div>
