@@ -5,8 +5,16 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-success.svg)](public/manifest.json)
 [![Security: AES-256-GCM](https://img.shields.io/badge/Cryptography-AES--256--GCM-indigo.svg)](src/utils/crypto.ts)
-[![AI Engine](https://img.shields.io/badge/AI%20Guard-Google%20Gemini%203.8%20Flash-cyan.svg)](server.ts)
+[![AI Engine](https://img.shields.io/badge/AI%20Guard-BYOK%20Google%20Gemini-cyan.svg)](src/services/aiSecurity.ts)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6.svg)](tsconfig.json)
+
+---
+
+## 📥 Cài đặt / Install
+
+- **Người dùng thường (không cần build)** → tải bản dựng sẵn ở [**Releases**](https://github.com/huanbv/aether-wallet/releases/latest).
+- **Lập trình viên** → xem hướng dẫn build từ mã nguồn.
+- 📄 **Hướng dẫn chi tiết song ngữ cho cả hai: [INSTALL.md](INSTALL.md)**
 
 ---
 
